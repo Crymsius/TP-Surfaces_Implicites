@@ -188,12 +188,62 @@ float BlendN(float a,float b,float n)
 // p : point
 float object(vec3 p)
 {
-  p.z=-p.z;
-  float v = Difference(bubble(p,vec3( 0.0, 1.0, 1.0),2.0 ,1.0,1.0),
-                  point(p,vec3( 2.0, 0.0,-1.5),1.0,4.5));
+  vec3 seg4a = vec3(0., 0., -0.6);
+  vec3 seg4b = vec3(0., 0., 0.6);
+  
+  vec3 seg3a = vec3(0., 0.3, -1.2);
+  vec3 seg3b = vec3(0., 0.75, -1.5);
+  
+  vec3 seg2a = vec3(0., 1.2, -1.5);
+  vec3 seg2b = vec3(0., 1.2, -2.5);
+  
+  vec3 seg5a = vec3(0., 0., 1.2);
+  vec3 seg5b = vec3(0., 0.27, 1.5);
+  
+  vec3 seg6a = vec3(0., seg5b.y, 1.5);
+  vec3 seg6b = vec3(0., seg5b.y + 0.5, 2.);
 
-  // v=Blend(v,point(p,vec3(-3.0, 2.0,-3.0),1.0,4.5));
-  // v=Union(v,point(p,vec3(-1.0, -1.0, 0.0),1.0,4.5));
+  vec3 seg1Aa = vec3(-0.2, -0.4, -0.7);
+  vec3 seg1Ab = vec3(-0.4, -0.9, -0.8);
+  vec3 seg1Ba = vec3(0.2, -0.4, -0.7);
+  vec3 seg1Bb = vec3(0.4, -0.9, -0.8);
+ 
+  vec3 seg7Aa = vec3(-0.2, -0.4, 0.7);
+  vec3 seg7Ab = vec3(-0.4, -0.9, 0.8);
+  vec3 seg7Ba = vec3(0.2, -0.4, 0.7);
+  vec3 seg7Bb = vec3(0.4, -0.9, 0.8);
+ 
+  vec3 seg8Aa = vec3(-0.2, 1.7, -1.7);
+  vec3 seg8Ab = vec3(-0.4, 2.1, -1.6);
+  vec3 seg8Ba = vec3(0.2, 1.7, -1.7);
+  vec3 seg8Bb = vec3(0.4, 2.1, -1.6);
+
+
+  p.z=-p.z;
+
+  float seg4 = segment(p, seg4a, seg4b, 1.0, 0.8);
+  float seg3 = segment(p, seg3a, seg3b, 1.0, 0.8);
+  float seg2 = segment(p, seg2a, seg2b, 1.0, 0.8);
+  float seg5 = segment(p, seg5a, seg5b, 1.0, 0.8);
+  float seg6 = segment(p, seg6a, seg6b, 1.0, 0.4);
+  float seg1A = segment(p, seg1Aa, seg1Ab, 1.0, 0.8);
+  float seg1B = segment(p, seg1Ba, seg1Bb, 1.0, 0.8);
+  float seg7A = segment(p, seg7Aa, seg7Ab, 1.0, 0.8);
+  float seg7B = segment(p, seg7Ba, seg7Bb, 1.0, 0.8);
+  float seg8A = segment(p, seg8Aa, seg8Ab, 1.0, 0.8);
+  float seg8B = segment(p, seg8Ba, seg8Bb, 1.0, 0.8);
+
+  float v = Union(seg3, seg4);
+  v = Union(v, seg2);
+  v = Union(v, seg5);
+  v = Union(v, seg6);
+  v = Union(v, seg1A);
+  v = Union(v, seg1B);
+  v = Union(v, seg7A);
+  v = Union(v, seg7B);
+  v = Union(v, seg8A);
+  v = Union(v, seg8B);
+
   return v-T;
 }
 
