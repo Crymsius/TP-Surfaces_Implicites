@@ -26,8 +26,8 @@ const lowp vec2 MAP_SIZE = vec2(4,5);
 #undef flt
 
 const int Steps = 1000;
-const float Epsilon = 0.05; // Marching epsilon
-const float T=0.5;
+const float Epsilon = 0.1; // Marching epsilon
+const float T=0.3;
 
 const float rA=10.0; // Maximum ray marching or sphere tracing distance from origin
 const float rB=40.0; // Minimum
@@ -117,7 +117,6 @@ float circle(vec3 p, vec3 c, float r, vec3 n, float e, float R)
     return e * falloff(d, R);
 }
 
-
 float disk(vec3 p, vec3 c, float r, vec3 n, float e, float R)
 {
     float h = dot((p - c), n); 
@@ -147,116 +146,146 @@ float bubble(vec3 p, vec3 c, float radius , float e, float R)
 // Blending
 // a : field function of left sub-tree
 // b : field function of right sub-tree
-float Blend(float a,float b)
+float Blend(float a, vec3 colorA, float b, vec3 colorB, out vec3 colorOut)
 {
+    colorOut = (a*colorA + b*colorB)/(a+b);
     return a+b;
 }
 
 // Union
 // a : field function of left sub-tree
 // b : field function of right sub-tree
-float Union(float a,float b)
+float Union(float a, vec3 colorA, float b, vec3 colorB, out vec3 colorOut)
 {
+    if (a>b)
+        colorOut = colorA;
+    else
+        colorOut = colorB;
     return max(a,b);
 }
 
 // Intersection
 // a : field function of left sub-tree
 // b : field function of right sub-tree
-float Intersection(float a,float b)
+float Intersection(float a, vec3 colorA, float b, vec3 colorB, out vec3 colorOut)
 {
+    if (a>b)
+        colorOut = colorA;
+    else
+        colorOut = colorB;
     return min(a,b);
 }
 
 // Difference
 // a : field function of left sub-tree
 // b : field function of right sub-tree
-float Difference(float a,float b)
+float Difference(float a, vec3 colorA, float b, vec3 colorB, out vec3 colorOut)
 {
+    if (a>b)
+        colorOut = colorA;
+    else
+        colorOut = colorB;
     return min(a, 2. * T - b);
 }
 
 // BlendN
 // a : field function of left sub-tree
 // b : field function of right sub-tree
-float BlendN(float a,float b,float n)
+float BlendN(float a, vec3 colorA, float b, vec3 colorB, float n, out vec3 colorOut)
 {
+    colorOut = (a*colorA + b*colorB)/(a+b);
     return pow((pow(a, n) + pow(b, n)), 1./n);
 }
 
 // Potential field of the object
 // p : point
-float object(vec3 p)
+float object(vec3 p, out vec3 colorOut)
 {
-  vec3 seg4a = vec3(0., 0., -0.6);
-  vec3 seg4b = vec3(0., 0., 0.6);
-  
-  vec3 seg3a = vec3(0., 0.3, -1.2);
-  vec3 seg3b = vec3(0., 0.75, -1.5);
-  
-  vec3 seg2a = vec3(0., 1.2, -1.5);
-  vec3 seg2b = vec3(0., 1.2, -2.5);
-  
-  vec3 seg5a = vec3(0., 0., 1.2);
-  vec3 seg5b = vec3(0., 0.27, 1.5);
-  
-  vec3 seg6a = vec3(0., seg5b.y, 1.5);
-  vec3 seg6b = vec3(0., seg5b.y + 0.5, 2.);
-
-  vec3 seg1Aa = vec3(-0.2, -0.4, -0.7);
-  vec3 seg1Ab = vec3(-0.4, -0.9, -0.8);
-  vec3 seg1Ba = vec3(0.2, -0.4, -0.7);
-  vec3 seg1Bb = vec3(0.4, -0.9, -0.8);
- 
-  vec3 seg7Aa = vec3(-0.2, -0.4, 0.7);
-  vec3 seg7Ab = vec3(-0.4, -0.9, 0.8);
-  vec3 seg7Ba = vec3(0.2, -0.4, 0.7);
-  vec3 seg7Bb = vec3(0.4, -0.9, 0.8);
- 
-  vec3 seg8Aa = vec3(-0.2, 1.7, -1.7);
-  vec3 seg8Ab = vec3(-0.4, 2.1, -1.6);
-  vec3 seg8Ba = vec3(0.2, 1.7, -1.7);
-  vec3 seg8Bb = vec3(0.4, 2.1, -1.6);
-
+  vec3 colorA = vec3(1., 0., 0.);
+  vec3 colorB = vec3(0., 0.4, 1.);
+  vec3 coordA = vec3(0., 0.3, -1.2);
+  vec3 coordB = vec3(0., -0.5, -1.5);
 
   p.z=-p.z;
 
-  float seg4 = segment(p, seg4a, seg4b, 1.0, 0.8);
-  float seg3 = segment(p, seg3a, seg3b, 1.0, 0.8);
-  float seg2 = segment(p, seg2a, seg2b, 1.0, 0.8);
-  float seg5 = segment(p, seg5a, seg5b, 1.0, 0.8);
-  float seg6 = segment(p, seg6a, seg6b, 1.0, 0.4);
-  float seg1A = segment(p, seg1Aa, seg1Ab, 1.0, 0.8);
-  float seg1B = segment(p, seg1Ba, seg1Bb, 1.0, 0.8);
-  float seg7A = segment(p, seg7Aa, seg7Ab, 1.0, 0.8);
-  float seg7B = segment(p, seg7Ba, seg7Bb, 1.0, 0.8);
-  float seg8A = segment(p, seg8Aa, seg8Ab, 1.0, 0.8);
-  float seg8B = segment(p, seg8Ba, seg8Bb, 1.0, 0.8);
+  float pointA = point(p, coordA, 2.0, 1.);
+  float pointB = point(p, coordB, 2.0, 1.);
 
-  float v = Union(seg3, seg4);
-  v = Union(v, seg2);
-  v = Union(v, seg5);
-  v = Union(v, seg6);
-  v = Union(v, seg1A);
-  v = Union(v, seg1B);
-  v = Union(v, seg7A);
-  v = Union(v, seg7B);
-  v = Union(v, seg8A);
-  v = Union(v, seg8B);
+  float v = Blend(pointA, colorA, pointB, colorB, colorOut);
+
+  /*dog baloon*/
+
+//   vec3 colorDog = vec3(1., 0., 0.);
+//   vec3 seg4a = vec3(0., 0., -0.6);
+//   vec3 seg4b = vec3(0., 0., 0.6);
+  
+//   vec3 seg3a = vec3(0., 0.3, -1.2);
+//   vec3 seg3b = vec3(0., 0.75, -1.5);
+  
+//   vec3 seg2a = vec3(0., 1.2, -1.5);
+//   vec3 seg2b = vec3(0., 1.2, -2.5);
+  
+//   vec3 seg5a = vec3(0., 0., 1.2);
+//   vec3 seg5b = vec3(0., 0.27, 1.5);
+  
+//   vec3 seg6a = vec3(0., seg5b.y, 1.5);
+//   vec3 seg6b = vec3(0., seg5b.y + 0.5, 2.);
+
+//   vec3 seg1Aa = vec3(-0.2, -0.4, -0.7);
+//   vec3 seg1Ab = vec3(-0.4, -0.9, -0.8);
+//   vec3 seg1Ba = vec3(0.2, -0.4, -0.7);
+//   vec3 seg1Bb = vec3(0.4, -0.9, -0.8);
+ 
+//   vec3 seg7Aa = vec3(-0.2, -0.4, 0.7);
+//   vec3 seg7Ab = vec3(-0.4, -0.9, 0.8);
+//   vec3 seg7Ba = vec3(0.2, -0.4, 0.7);
+//   vec3 seg7Bb = vec3(0.4, -0.9, 0.8);
+ 
+//   vec3 seg8Aa = vec3(-0.2, 1.7, -1.7);
+//   vec3 seg8Ab = vec3(-0.4, 2.1, -1.6);
+//   vec3 seg8Ba = vec3(0.2, 1.7, -1.7);
+//   vec3 seg8Bb = vec3(0.4, 2.1, -1.6);
+
+
+//   p.z=-p.z;
+
+//   float seg4 = segment(p, seg4a, seg4b, 1.0, 0.8);
+//   float seg3 = segment(p, seg3a, seg3b, 1.0, 0.8);
+//   float seg2 = segment(p, seg2a, seg2b, 1.0, 0.8);
+//   float seg5 = segment(p, seg5a, seg5b, 1.0, 0.8);
+//   float seg6 = segment(p, seg6a, seg6b, 1.0, 0.4);
+//   float seg1A = segment(p, seg1Aa, seg1Ab, 1.0, 0.8);
+//   float seg1B = segment(p, seg1Ba, seg1Bb, 1.0, 0.8);
+//   float seg7A = segment(p, seg7Aa, seg7Ab, 1.0, 0.8);
+//   float seg7B = segment(p, seg7Ba, seg7Bb, 1.0, 0.8);
+//   float seg8A = segment(p, seg8Aa, seg8Ab, 1.0, 0.8);
+//   float seg8B = segment(p, seg8Ba, seg8Bb, 1.0, 0.8);
+
+//   float v = Union(seg3, colorDog, seg4, colorDog, colorOut);
+//   v = Union(v, colorDog, seg2, colorDog, colorOut);
+//   v = Union(v, colorDog, seg5, colorDog, colorOut);
+//   v = Union(v, colorDog, seg6, colorDog, colorOut);
+//   v = Union(v, colorDog, seg1A, colorDog, colorOut);
+//   v = Union(v, colorDog, seg1B, colorDog, colorOut);
+//   v = Union(v, colorDog, seg7A, colorDog, colorOut);
+//   v = Union(v, colorDog, seg7B, colorDog, colorOut);
+//   v = Union(v, colorDog, seg8A, colorDog, colorOut);
+//   v = Union(v, colorDog, seg8B, colorB, colorOut);
 
   return v-T;
 }
 
 // Calculate object normal
 // p : point
-vec3 ObjectNormal(in vec3 p )
+vec3 ObjectNormal(in vec3 p)
 {
+  vec3 color;
   float eps = 0.0001;
   vec3 n;
-  float v = object(p);
-  n.x = object( vec3(p.x+eps, p.y, p.z) ) - v;
-  n.y = object( vec3(p.x, p.y+eps, p.z) ) - v;
-  n.z = object( vec3(p.x, p.y, p.z+eps) ) - v;
+  float v = object(p, color);
+  n.x = object( vec3(p.x+eps, p.y, p.z), color ) - v;
+  n.y = object( vec3(p.x, p.y+eps, p.z), color ) - v;
+  n.z = object( vec3(p.x, p.y, p.z+eps), color ) - v;
   return normalize(n);
 }
 
@@ -265,7 +294,7 @@ vec3 ObjectNormal(in vec3 p )
 // u : ray direction
 // h : hit
 // s : Number of steps
-float Trace(vec3 o, vec3 u, out bool h,out int s)
+float Trace(vec3 o, vec3 u, out bool h,out int s, out vec3 objColor)
 {
   h = false;
 
@@ -276,7 +305,7 @@ float Trace(vec3 o, vec3 u, out bool h,out int s)
   {
     s=i;
     vec3 p = o+t*u;
-    float v = object(p);
+    float v = object(p, objColor);
     // Hit object
       if (v > 0.0)
       {
@@ -300,10 +329,9 @@ float Trace(vec3 o, vec3 u, out bool h,out int s)
 // u : ray direction
 // h : hit
 // s : Number of steps
-float SphereTrace(vec3 o, vec3 u, out bool h,out int s)
+float SphereTrace(vec3 o, vec3 u, out bool h,out int s, out vec3 objColor)
 {
   h = false;
-
     // Don't start at the origin, instead move a little bit forward
     float t=rA;
 
@@ -311,7 +339,7 @@ float SphereTrace(vec3 o, vec3 u, out bool h,out int s)
   {
     s=i;
     vec3 p = o+t*u;
-    float v = object(p);
+    float v = object(p, objColor);
     // Hit object
       if (v > 0.0)
       {
@@ -340,7 +368,7 @@ vec3 background(vec3 rd)
 // Shading and lighting
 // p : point,
 // n : normal at point
-vec3 Shade(vec3 p, vec3 n)
+vec3 Shade(vec3 p, vec3 n, vec3 objColor)
 {
   // point light
   const vec3 lightPos = vec3(5.0, 5.0, 5.0);
@@ -352,7 +380,7 @@ vec3 Shade(vec3 p, vec3 n)
   // Not even Phong shading, use weighted cosine instead for smooth transitions
   float diff = 0.5*(1.0+dot(n, l));
 
-  c += diff*lightColor;
+  c += diff * lightColor * objColor;
 
   return c;
 }
@@ -533,11 +561,12 @@ void main()
   // Number of steps
   int s;
 
-  float txt = text(pixel);
+  float txt = 0.;//text(pixel);
   vec3 rgb;
+  vec3 objColor;
   if (txt == 0.0)
   {
-    float t = SphereTrace(ro, rd, hit,s);
+    float t = SphereTrace(ro, rd, hit, s, objColor);
     vec3 pos=ro+t*rd;
     // Shade background
     rgb = background(rd);
@@ -548,7 +577,7 @@ void main()
       vec3 n = ObjectNormal(pos);
 
       // Shade object with light
-      rgb = Shade(pos, n);
+      rgb = Shade(pos, n, objColor);
     }
   }
   else
