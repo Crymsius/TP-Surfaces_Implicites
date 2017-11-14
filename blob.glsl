@@ -119,15 +119,16 @@ float circle(vec3 p, vec3 c, float r, vec3 n, float e, float R)
 
 float disk(vec3 p, vec3 c, float r, vec3 n, float e, float R)
 {
+    n /= length(n); // enlever pour replier l'espace temps
     float h = dot((p - c), n); 
     float l = sqrt(pow(length(p - c), 2.0) - h*h);
     float m = l - r;
     float d;
     
-    if (l < r)
-        d = h;
+    if (m < 0.)
+        d = abs(h);
     else
-    	d = sqrt(h*h + m*m);
+        d = sqrt(h*h + m*m);
     
     return e * falloff(d, R);
 }
@@ -201,12 +202,14 @@ float BlendN(float a, vec3 colorA, float b, vec3 colorB, float n, out vec3 color
 // p : point
 float object(vec3 p, out vec3 colorOut)
 {
+    p.z=-p.z;
+
+/* lavaLamp */
+
   vec3 colorA = vec3(1., 1., 0.);
   vec3 colorB = vec3(1., 0., 0.);
   vec3 coordA = vec3(0., 0.3, -1.2);
   vec3 coordB = vec3(0., -0.5, -1.5);
-
-  p.z=-p.z;
 
     float h1 = sin(iGlobalTime/2. + 10.);
     vec3 pos1 = vec3(0.,0.,h1);
@@ -251,9 +254,6 @@ float object(vec3 p, out vec3 colorOut)
 //   vec3 seg8Ba = vec3(0.2, 1.7, -1.7);
 //   vec3 seg8Bb = vec3(0.4, 2.1, -1.6);
 
-
-//   p.z=-p.z;
-
 //   float seg4 = segment(p, seg4a, seg4b, 1.0, 0.8);
 //   float seg3 = segment(p, seg3a, seg3b, 1.0, 0.8);
 //   float seg2 = segment(p, seg2a, seg2b, 1.0, 0.8);
@@ -266,16 +266,16 @@ float object(vec3 p, out vec3 colorOut)
 //   float seg8A = segment(p, seg8Aa, seg8Ab, 1.0, 0.8);
 //   float seg8B = segment(p, seg8Ba, seg8Bb, 1.0, 0.8);
 
-//   float v = Union(seg3, colorDog, seg4, colorDog, colorOut);
-//   v = Union(v, colorDog, seg2, colorDog, colorOut);
-//   v = Union(v, colorDog, seg5, colorDog, colorOut);
-//   v = Union(v, colorDog, seg6, colorDog, colorOut);
-//   v = Union(v, colorDog, seg1A, colorDog, colorOut);
-//   v = Union(v, colorDog, seg1B, colorDog, colorOut);
-//   v = Union(v, colorDog, seg7A, colorDog, colorOut);
-//   v = Union(v, colorDog, seg7B, colorDog, colorOut);
-//   v = Union(v, colorDog, seg8A, colorDog, colorOut);
-//   v = Union(v, colorDog, seg8B, colorB, colorOut);
+//   float v = Union(seg3, colorDog, seg4, colorDog,colorOut);
+//   v = Union(v, colorDog, seg2, colorDog,colorOut);
+//   v = Union(v, colorDog, seg5, colorDog,colorOut);
+//   v = Union(v, colorDog, seg6, colorDog,colorOut);
+//   v = Union(v, colorDog, seg1A, colorDog,colorOut);
+//   v = Union(v, colorDog, seg1B, colorDog,colorOut);
+//   v = Union(v, colorDog, seg7A, colorDog,colorOut);
+//   v = Union(v, colorDog, seg7B, colorDog,colorOut);
+//   v = Union(v, colorDog, seg8A, colorDog,colorOut);
+//   v = Union(v, colorDog, seg8B, colorDog,colorOut);
 
   return v-T;
 }
