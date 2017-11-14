@@ -26,8 +26,8 @@ const lowp vec2 MAP_SIZE = vec2(4,5);
 #undef flt
 
 const int Steps = 1000;
-const float Epsilon = 0.1; // Marching epsilon
-const float T=0.3;
+const float Epsilon = 0.01; // Marching epsilon
+const float T=0.5;
 
 const float rA=10.0; // Maximum ray marching or sphere tracing distance from origin
 const float rB=40.0; // Minimum
@@ -201,17 +201,22 @@ float BlendN(float a, vec3 colorA, float b, vec3 colorB, float n, out vec3 color
 // p : point
 float object(vec3 p, out vec3 colorOut)
 {
-  vec3 colorA = vec3(1., 0., 0.);
-  vec3 colorB = vec3(0., 0.4, 1.);
+  vec3 colorA = vec3(1., 1., 0.);
+  vec3 colorB = vec3(1., 0., 0.);
   vec3 coordA = vec3(0., 0.3, -1.2);
   vec3 coordB = vec3(0., -0.5, -1.5);
 
   p.z=-p.z;
 
-  float pointA = point(p, coordA, 2.0, 1.);
-  float pointB = point(p, coordB, 2.0, 1.);
+    float h1 = sin(iGlobalTime/2. + 10.);
+    vec3 pos1 = vec3(0.,0.,h1);
+    float h2 = sin(iGlobalTime/2. - 10.);
+    vec3 pos2 = vec3(0.,0.,h2);
 
-  float v = Blend(pointA, colorA, pointB, colorB, colorOut);
+  float pointA = point(p, coordA*pos1, 2.0, 1.*abs(h1)+1.);
+  float pointB = point(p, -coordB*pos2, 2.0, 1.*abs(h2)+1.);
+
+  float v = BlendN(pointA, colorA, pointB, colorB, 2., colorOut);
 
   /*dog baloon*/
 
@@ -348,7 +353,7 @@ float SphereTrace(vec3 o, vec3 u, out bool h,out int s, out vec3 objColor)
           break;
       }
       // Move along ray
-      t += max(Epsilon,abs(v)/10.0);
+      t += max(Epsilon,abs(v)/4.0);
       // Escape marched far away
       if (t>rB)
       {
